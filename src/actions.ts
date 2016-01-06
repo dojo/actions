@@ -15,6 +15,7 @@ export enum ActionTypes {
 
 export type ActionLabel = ActionTypes | string | symbol;
 
+/* Cannot use an indexer, because indexers can only be string | number */
 const actionMap: any = {};
 
 interface ActionMethods<T, O> {
@@ -24,7 +25,7 @@ interface ActionMethods<T, O> {
 	enabler: (enabled: boolean) => boolean | Promise<boolean>;
 }
 
-const actionMethods = new WeakMap<Action<any, ActionOptions<any>>, ActionMethods<any, any>>();
+const actionMethods = new WeakMap<Action<any, ActionOptions<any>, any>, ActionMethods<any, any>>();
 
 export interface ActionPromise<T, O extends ActionOptions<any>> extends Promise<T> {
 	/**
@@ -47,11 +48,21 @@ export interface ActionOptions<T> {
 }
 
 /**
+ * Type base interface for the state of an action, intended to be extended
+ */
+export interface ActionState {
+	[name: string]: any;
+}
+
+/* TODO: In typescript 1.8 <T, O extends ActionOptions<T>> will be valid */
+
+/**
  * An action encapsulates do, undo and redo functionality
  * @template T The type that the action's promise will resolve to
  * @template O (extends ActionOptions) the type of the options to be passed the do or redo function
+ * @template S (extends ActionState) the type of state for the action
  */
-export interface Action<T, O extends ActionOptions<any>> {
+export interface Action<T, O extends ActionOptions<any>, S extends ActionState> {
 	/**
 	 * The action type
 	 */
@@ -59,8 +70,8 @@ export interface Action<T, O extends ActionOptions<any>> {
 
 	/**
 	 * Invoke the action
-	 * @param {O} options Optional argument providing any options to the action
-	 * @returns {ActionPromise} a Promise which is also decorated with redo and undo methods
+	 * @param   options Optional argument providing any options to the action
+	 * @returns         a Promise which is also decorated with redo and undo methods
 	 */
 	do(options?: O): ActionPromise<T, O>;
 
@@ -72,22 +83,23 @@ export interface Action<T, O extends ActionOptions<any>> {
 	/**
 	 * A hash that contains any state for the action to facilitate items like "undo"
 	 */
-	state?: { [name: string]: any; };
+	state?: S;
 
 	/**
 	 * Disable the action
-	 * @returns {Promise<boolean>} A promise the resolves when the action is disabled
+	 * @returns A promise the resolves when the action is disabled
 	 */
 	disable(): Promise<boolean>;
+
 	/**
 	 * Enable the promise
-	 * @returns {Promise<boolean>} A promise that resolves when the action is enabled
+	 * @returns A promise that resolves when the action is enabled
 	 */
 	enable(): Promise<boolean>;
 
 	/**
 	 * Destory the action
-	 * @returns {Promise<boolean>} A promise that resolves when the action is destoryed
+	 * @returns A promise that resolves when the action is destoryed
 	 */
 	destroy(): Promise<boolean>;
 }
@@ -96,11 +108,12 @@ export interface Action<T, O extends ActionOptions<any>> {
  * Options that are passed when creating a new action
  * @template T The type that the action's promise will resolve to
  * @template O (extends ActionOptions) the type of the options to be passed the do or redo function
+ * @template S (extends ActionState) the type of state for the action
  */
-export interface ActionFactoryOptions<T, O extends ActionOptions<any>> {
+export interface ActionFactoryOptions<T, O extends ActionOptions<any>, S extends ActionState> {
 	type: ActionLabel;
 	do: (options?: O) => T | Promise<T>;
-	state?: { [name: string]: any; };
+	state?: S;
 	undo?: () => T | Promise<T>;
 	redo?: (options?: O) => T | Promise<T>;
 	enabler?: (enabled: boolean) => boolean | Promise<boolean>;
@@ -109,95 +122,103 @@ export interface ActionFactoryOptions<T, O extends ActionOptions<any>> {
 /**
  * A factory that creates a new action
  */
-export interface ActionFactory extends ComposeFactory<Action<any, any>, any> {
+export interface ActionFactory extends ComposeFactory<Action<any, any, any>, any> {
 	/**
 	 * A factory that creates a new action
-	 * @param {ActionFactoryOptions<T, O>} options The options to specify the action.
+	 * @param   options The options to specify the action.
+	 * @returns         The action instance
+	 * @template T The type that the action's promise will resolve to
+	 * @template O (extends ActionOptions) the type of the options to be passed the do or redo function
+	 * @template S (extends ActionState) the type of state for the action
 	 */
-	<T, O extends ActionOptions<any>>(options: ActionFactoryOptions<T, O>): Action<T, O>;
+	<T, O extends ActionOptions<any>, S extends ActionState>(options: ActionFactoryOptions<T, O, S>): Action<T, O, S>;
 
-	disable<T, O extends ActionOptions<any>>(action: ActionLabel | Action<T, O>): Promise<boolean>;
-	enable<T, O extends ActionOptions<any>>(action: ActionLabel | Action<T, O>): Promise<boolean>;
+	disable<T, O extends ActionOptions<any>, S extends ActionState>(action: ActionLabel | Action<T, O, S>): Promise<boolean>;
+	enable<T, O extends ActionOptions<any>, S extends ActionState>(action: ActionLabel | Action<T, O, S>): Promise<boolean>;
 
-	destroy<T, O extends ActionOptions<any>>(action: ActionLabel | Action<T, O>): Promise<boolean>;
+	destroy<T, O extends ActionOptions<any>, S extends ActionState>(action: ActionLabel | Action<T, O, S>): Promise<boolean>;
 }
 
 /**
  * Decorate a Thenable/Promise to be an ActionPromise
- * @param {Thenable<T> | Promise<T>} p The target to decorate
- * @returns {ActionPromise<T, O>} The decorated ActionPromise
- * @template {any} T The return type of the action
- * @tempalte {ActionOptions} O The options for the action
+ * @param    p The target to decorate
+ * @returns    The decorated ActionPromise
+ * @template T The return type of the action
+ * @template O (extends ActionOptions) The options for the action
  */
-function decoratePromise<T, O>(p: Thenable<T> | Promise<T>): ActionPromise<T, O> {
-	let result = p as ActionPromise<T, O>;
-	result.undo = undoFn.bind(this);
-	result.redo = redoFn.bind(this);
+function decoratePromise<T, O>(p: Thenable<T> | Promise<T>, action: Action<any, any, any>): ActionPromise<T, O> {
+	const result = p as ActionPromise<T, O>;
+	result.undo = function undo() {
+		return decoratePromise(p.then(() => undoFn.call(action)), action);
+	};
+	result.redo = function redo(options) {
+		return decoratePromise(p.then(() => redoFn.call(action, options)), action);
+	};
 	return result;
 }
 
-function undoFn<T, O extends ActionOptions<any>>(): ActionPromise<T, O> {
+function undoFn<T>(): Thenable<T> {
 	const _undo = actionMethods.get(this).undo;
 	/* if undo is not defined, we will resolve with undefined */
 	if (!_undo) {
-		return decoratePromise(new Promise((resolve) => { resolve(); }));
+		return new Promise((resolve) => { resolve(); });
 	}
 	if (!this.enabled) {
-		return decoratePromise(new Promise((resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			reject(new Error(`Action "${this.type}" not enabled`));
-		}));
+		});
 	}
 	try {
 		const result: T | Thenable<T> = _undo.call(this);
-		return decoratePromise(isThenable(result) ? result : new Promise((resolve) => {
+		return isThenable(result) ? result : new Promise((resolve) => {
 			resolve(result);
-		}));
+		});
 	}
 	catch (e) {
-		return decoratePromise(new Promise((resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			reject(e);
-		}));
+		});
 	}
 }
 
-function redoFn<T, O extends ActionOptions<any>>(options?: O): ActionPromise<T, O> {
+function redoFn<T, O extends ActionOptions<any>>(options?: O): Thenable<T> {
 	/* If redo is undefined, we will automatically substitute do */
 	const _redo = actionMethods.get(this).redo || actionMethods.get(this).do;
 	if (!this.enabled) {
-		return decoratePromise(new Promise((resolve, reject) => {
-			reject(new Error(`Action "${this.type}" not enabled`));
-		}));
+		return new Promise((resolve, reject) => {
+			reject(new Error(`Action "${String(this.type)}" not enabled`));
+		});
 	}
 	try {
 		const result: T | Thenable<T> = _redo.call(this, options);
-		return decoratePromise(isThenable(result) ? result : new Promise((resolve) => {
+		return isThenable(result) ? result : new Promise((resolve) => {
 			resolve(result);
-		}));
+		});
 	}
 	catch (e) {
-		return decoratePromise(new Promise((resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			reject(e);
-		}));
+		});
 	}
 }
 
 function doFn<T, O extends ActionOptions<any>>(options: O): ActionPromise<T, O> {
 	if (!this.enabled) {
 		return decoratePromise(new Promise((resolve, reject) => {
-			reject(new Error(`Action "${this.type}" not enabled`));
-		}));
+			reject(new Error(`Action "${String(this.type)}" not enabled`));
+		}), this);
 	}
 	try {
 		const _do = actionMethods.get(this).do;
 		const result: T | Thenable<T> = _do.call(this, options);
 		return decoratePromise(isThenable(result) ? result : new Promise((resolve) => {
 			resolve(result);
-		}));
+		}), this);
 	}
 	catch (e) {
 		return decoratePromise(new Promise((resolve, reject) => {
 			reject(e);
-		}));
+		}), this);
 	}
 }
 
@@ -208,21 +229,38 @@ const factory = compose({
 	do: doFn,
 	state: undefined,
 	enabled: false,
-	disable() { },
-	enable() { },
+	disable() {
+		return new Promise((resolve) => {
+			resolve(this.enabled = false);
+		});
+	},
+	enable() {
+		return new Promise((resolve) => {
+			resolve(this.enabled = true);
+		});
+	},
 	destroy() {
 		return new Promise((resolve) => {
-			actionMap[this.type] = undefined;
+			delete actionMap[this.type];
 			Object.defineProperty(this, 'type', {
 				value: undefined
 			});
 			actionMethods.delete(this);
-			this.state = undefined;
+			delete this.state;
 			this.enabled = false;
 			resolve(false);
 		});
 	}
-}, function(options: ActionFactoryOptions<any, any>) {
+}, function(options: ActionFactoryOptions<any, any, any>) {
+
+	if (!options.type) {
+		throw new TypeError('Missing action type, cannot create action.');
+	}
+
+	if (options.type in actionMap) {
+		throw new TypeError(`Duplicate action type of "${String(options.type)}"`);
+	}
+
 	actionMethods.set(this, {
 		do: options.do,
 		undo: options.undo,
@@ -250,20 +288,37 @@ const factory = compose({
 }) as ActionFactory;
 
 /**
- * Type guard to determine if the value is an Action
- * @param {any} value The value to be checked
- * @returns {boolean} Returns `true` if is an action, otherwise `false`
+ * Returns an action based on the supplied label
+ * @param    type The type of action to be retrieved
+ * @returns       The action (or undefined)
+ * @template T    The type that the action's promise will resolve to
+ * @template O    (extends ActionOptions) the type of the options to be passed the do or redo function
+ * @template S    (extends ActionState) the type of state for the action
  */
-export function isAction(value: any): value is Action<any, any> {
-	return typeof value === 'object' && 'type' in value;
+export function byType<T, O extends ActionOptions<any>, S extends ActionState>(type: ActionLabel): Action<T, O, S> {
+	if (type in actionMap) {
+		return actionMap[type];
+	}
+};
+
+/**
+ * Type guard to determine if the value is an Action
+ * @param    value The value to be checked
+ * @returns        Returns `true` if is an action, otherwise `false`
+ */
+export function isAction(value: any): value is Action<any, any, any> {
+	return typeof value === 'object' && 'type' in value && 'do' in value && typeof value.do === 'function';
 }
 
 /**
  * Returns if the current action is enabled or not
- * @param {ActionLabel|Action<T, O>} action The action label or an action instance
- * @returns {boolean} Returns true if enabled or false if disabled
+ * @param   action The action label or an action instance
+ * @returns        Returns true if enabled or false if disabled
+ * @template T     The type that the action's promise will resolve to
+ * @template O     (extends ActionOptions) the type of the options to be passed the do or redo function
+ * @template S     (extends ActionState) the type of state for the action
  */
-export function isEnabled<T, O extends ActionOptions<any>>(action: ActionLabel | Action<T, O>): boolean {
+export function isEnabled<T, O extends ActionOptions<any>, S extends ActionState>(action: ActionLabel | Action<T, O, S>): boolean {
 	return isAction(action) ? action.enabled : actionMap[action] && actionMap[action].enabled;
 };
 
