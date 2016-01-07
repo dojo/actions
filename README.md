@@ -93,7 +93,7 @@ actionFoo
     .redo({ target: obj2 });
 ```
 
-## redo()
+### redo()
 
 Like `do()`, `redo()` optionally supplied during construction will be called whenever the `redo()` method is called on the action.  If specified, `redo()` accepts the same `options` type as `do()`.  If a `redo()` method is not supplied, `do()` will be called instead.  So conceptually, if the action does not need different logic to be able to *redo* it's action, then there is no need to specify the method.  `redo()` behaves like `do()` and returns a `Promise` which has been decorated with `redo()` and `undo()`.  `redo()` will not be called until `do()` is resolved (and bypassed if `do()` is rejected/throws).
 
@@ -120,7 +120,7 @@ const memo = actionFoo.do({ target: obj1 });
 memo.redo({ target: obj2 });
 ```
 
-## undo()
+### undo()
 
 `undo()` is slightly different than `do()` and `redo()`.  Conceptually, `undo()` shouldn't take any arguments, as it should know what it needs to affect in order to *undo* something.  If an `undo()` method is not supplied during construction, it will result in a noop, but will still return a promise that is resolved.
 
