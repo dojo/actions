@@ -15,7 +15,7 @@ Actions embody the concept of "doing", "undoing" and "redoing" things.  The how 
 
 The `dojo-actions/actions` module has a default export of the actions factory, a factory which generates instances of the action class.
 
-Creating an action requires at least two options at least to be specified.  There is `type` which is a unique string, symbol or TypeScript enumeration value.  Also an action must implement a `do()` method.  For example:
+Creating an action requires at least two options at least to be specified.  There is `type` which is a unique string or symbol.  Also an action must implement a `do()` method.  For example:
 
 ```typescript
 import actionFactory from 'dojo-actions/actions';

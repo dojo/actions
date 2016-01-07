@@ -7,13 +7,7 @@ import Promise, { Thenable, isThenable } from 'dojo-core/Promise';
 import WeakMap from 'dojo-core/WeakMap';
 import { assign } from 'dojo-core/lang';
 
-/**
- * Enumberable action types
- */
-export enum ActionTypes {
-}
-
-export type ActionLabel = ActionTypes | string | symbol;
+export type ActionLabel = string | symbol;
 
 /* Cannot use an indexer, because indexers can only be string | number */
 const actionMap: any = {};

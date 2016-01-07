@@ -2,10 +2,15 @@ import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
 import actionFactory, { isEnabled, byType } from 'src/actions';
 import Promise from 'dojo-core/Promise';
+import global from 'dojo-core/global';
 
 interface FooOptions {
 	target: string;
 }
+
+declare var Symbol: (name?: string) => symbol;
+
+const hasSymbol = typeof global.Symbol === 'function';
 
 registerSuite({
 	name: 'actions',
@@ -38,6 +43,28 @@ registerSuite({
 		assert(isEnabled(actionFoo), 'action is enabled');
 		assert(isEnabled('foo'), 'action is enabled');
 		return actionFoo.destroy();
+	},
+	'symbol type'() {
+		if (!hasSymbol) {
+			this.skip('No native support for Symbol');
+		}
+
+		const foo = Symbol('foo');
+		let called = false;
+
+		const actionFoo = actionFactory({
+			type: foo,
+			do() {
+				called = true;
+			}
+		});
+
+		return byType(foo)
+			.do()
+			.then(() => {
+				assert.isTrue(called);
+				return actionFoo.destroy();
+			});
 	},
 	'creation/destruction'() {
 		assert.notOk(byType('foo'), 'There should be no action typed as "foo"');
