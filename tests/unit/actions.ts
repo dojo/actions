@@ -294,7 +294,7 @@ registerSuite({
 			setTimeout(() => {
 				assert.strictEqual(called, 'one');
 				called = 'two';
-			}, 1);
+			}, 50);
 
 			return result;
 		},
