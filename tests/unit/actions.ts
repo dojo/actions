@@ -79,6 +79,118 @@ registerSuite({
 			actionFoo1.destroy();
 		});
 	},
+	'do': {
+		'persists state'() {
+			const actionFoo = actionFactory({
+				type: 'foo',
+				state: { foo: 'bar' },
+				do(options: FooOptions) {
+					assert.strictEqual(options.target, 'foo');
+					assert.strictEqual(this.state.foo, 'bar');
+				}
+			});
+
+			return actionFoo.do({ target: 'foo' }).then(() => {
+				actionFoo.destroy();
+			});
+		},
+		'disabled'() {
+			const dfd = this.async();
+			let called = false;
+
+			const actionFoo = actionFactory({
+				type: 'foo',
+				do() {
+					called = true;
+				}
+			});
+
+			actionFoo.disable().then(() => {
+				actionFoo.do().then(dfd.reject.bind(this), function(e) {
+					assert.isFalse(called);
+					assert.instanceOf(e, Error);
+					actionFoo.enable().then(() => {
+						actionFoo.do().then(() => {
+							assert.isTrue(called);
+							actionFoo.destroy().then(dfd.resolve);
+						});
+					});
+				});
+			});
+		},
+		'returns value'() {
+			const actionFoo = actionFactory({
+				type: 'foo',
+				do(options: FooOptions) {
+					return options.target + 'bar';
+				}
+			});
+
+			return actionFoo
+				.do({ target: 'foo' })
+				.then((result) => {
+					assert.strictEqual(result, 'foobar');
+					return actionFoo.destroy();
+				});
+		},
+		'returns promise'() {
+			const actionFoo = actionFactory({
+				type: 'foo',
+				do(options: FooOptions) {
+					return new Promise((resolve) => {
+						setTimeout(() => {
+							resolve(options.target + 'bar');
+						}, 100);
+					});
+				}
+			});
+
+			return actionFoo
+				.do({ target: 'foo' })
+				.then((result) => {
+					assert.strictEqual(result, 'foobar');
+					return actionFoo.destroy();
+				});
+		},
+		'throws in method'() {
+			const dfd = this.async();
+
+			const actionFoo = actionFactory({
+				type: 'foo',
+				do() {
+					throw new Error('BOOM!');
+				}
+			});
+
+			actionFoo
+				.do()
+				.then(dfd.reject.bind(this), (error) => {
+					assert.instanceOf(error, Error);
+					assert.strictEqual(error.message, 'BOOM!');
+					actionFoo.destroy().then(dfd.resolve.bind(this));
+				});
+		},
+		'rejects in method'() {
+			const dfd = this.async();
+
+			const actionFoo = actionFactory({
+				type: 'foo',
+				do() {
+					return new Promise((resolve, reject) => {
+						reject(new Error('BOOM!'));
+					});
+				}
+			});
+
+			actionFoo
+				.do()
+				.then(dfd.reject.bind(this), (error) => {
+					assert.instanceOf(error, Error);
+					assert.strictEqual(error.message, 'BOOM!');
+					actionFoo.destroy().then(dfd.resolve.bind(this));
+				});
+		}
+	},
 	'undo': {
 		'no method'() {
 			const actionFoo = actionFactory({
@@ -122,7 +234,7 @@ registerSuite({
 
 			const memo = actionFoo.do();
 			actionFoo.disable().then(() => {
-				memo.undo().then(dfd.reject, (e) => {
+				memo.undo().then(dfd.reject.bind(this), (e) => {
 					assert.instanceOf(e, Error);
 					assert.isFalse(called);
 					actionFoo.destroy().then(dfd.resolve);
@@ -140,10 +252,10 @@ registerSuite({
 				}
 			});
 
-			return actionFoo.
-				do().
-				undo().
-				then((result) => {
+			return actionFoo
+				.do()
+				.undo()
+				.then((result) => {
 					assert.strictEqual(result, 'bar');
 					return actionFoo.destroy();
 				});
@@ -222,11 +334,12 @@ registerSuite({
 				}
 			});
 
-			actionFoo.
-				do().
-				undo().
-				then(dfd.reject, (error: any) => {
+			actionFoo
+				.do()
+				.undo()
+				.then(dfd.reject.bind(this), (error: any) => {
 					assert.instanceOf(error, Error);
+					assert.strictEqual(error.message, 'BOOM!');
 					actionFoo.destroy().then(dfd.resolve);
 				});
 		},
@@ -243,11 +356,12 @@ registerSuite({
 				}
 			});
 
-			actionFoo.
-				do().
-				undo().
-				then(dfd.reject, (error: any) => {
+			actionFoo
+				.do()
+				.undo()
+				.then(dfd.reject.bind(this), (error: any) => {
 					assert.instanceOf(error, Error);
+					assert.strictEqual(error.message, 'BOOM!');
 					actionFoo.destroy().then(dfd.resolve);
 				});
 		}
