@@ -257,6 +257,10 @@ const factory = compose({
 		throw new TypeError('Missing action type, cannot create action.');
 	}
 
+	if (!options.do) {
+		throw new TypeError('Missing action method "do", cannot create action.');
+	}
+
 	if (options.type in actionMap) {
 		throw new TypeError(`Duplicate action type of "${String(options.type)}"`);
 	}
