@@ -56,7 +56,7 @@ export interface ActionState {
  * @template O (extends ActionOptions) the type of the options to be passed the do or redo function
  * @template S (extends ActionState) the type of state for the action
  */
-export interface Action<T, O extends ActionOptions<any>, S extends ActionState> {
+export interface Action<T, O extends ActionOptions<T>, S extends ActionState> {
 	/**
 	 * The action type
 	 */
@@ -116,7 +116,7 @@ export interface ActionFactoryOptions<T, O extends ActionOptions<any>, S extends
 /**
  * A factory that creates a new action
  */
-export interface ActionFactory extends ComposeFactory<Action<any, any, any>, any> {
+export interface ActionFactory extends ComposeFactory<Action<any, any, any>, ActionFactoryOptions<any, any, any>> {
 	/**
 	 * A factory that creates a new action
 	 * @param   options The options to specify the action.
@@ -125,12 +125,12 @@ export interface ActionFactory extends ComposeFactory<Action<any, any, any>, any
 	 * @template O (extends ActionOptions) the type of the options to be passed the do or redo function
 	 * @template S (extends ActionState) the type of state for the action
 	 */
-	<T, O extends ActionOptions<any>, S extends ActionState>(options: ActionFactoryOptions<T, O, S>): Action<T, O, S>;
+	<T, O extends ActionOptions<T>, S extends ActionState>(options: ActionFactoryOptions<T, O, S>): Action<T, O, S>;
 
-	disable<T, O extends ActionOptions<any>, S extends ActionState>(action: ActionLabel | Action<T, O, S>): Promise<boolean>;
-	enable<T, O extends ActionOptions<any>, S extends ActionState>(action: ActionLabel | Action<T, O, S>): Promise<boolean>;
+	disable<T, O extends ActionOptions<T>, S extends ActionState>(action: ActionLabel | Action<T, O, S>): Promise<boolean>;
+	enable<T, O extends ActionOptions<T>, S extends ActionState>(action: ActionLabel | Action<T, O, S>): Promise<boolean>;
 
-	destroy<T, O extends ActionOptions<any>, S extends ActionState>(action: ActionLabel | Action<T, O, S>): Promise<boolean>;
+	destroy<T, O extends ActionOptions<T>, S extends ActionState>(action: ActionLabel | Action<T, O, S>): Promise<boolean>;
 }
 
 /**
@@ -140,7 +140,7 @@ export interface ActionFactory extends ComposeFactory<Action<any, any, any>, any
  * @template T The return type of the action
  * @template O (extends ActionOptions) The options for the action
  */
-function decoratePromise<T, O>(p: Thenable<T> | Promise<T>, action: Action<any, any, any>): ActionPromise<T, O> {
+function decoratePromise<T, O>(p: Thenable<T> | Promise<T>, action: Action<T, O, ActionState>): ActionPromise<T, O> {
 	const result = p as ActionPromise<T, O>;
 	result.undo = function undo() {
 		return decoratePromise(p.then(() => undoFn.call(action)), action);
@@ -175,7 +175,7 @@ function undoFn<T>(): Thenable<T> {
 	}
 }
 
-function redoFn<T, O extends ActionOptions<any>>(options?: O): Thenable<T> {
+function redoFn<T, O extends ActionOptions<T>>(options?: O): Thenable<T> {
 	/* If redo is undefined, we will automatically substitute do */
 	const _redo = actionMethods.get(this).redo || actionMethods.get(this).do;
 	if (!this.enabled) {
@@ -196,7 +196,7 @@ function redoFn<T, O extends ActionOptions<any>>(options?: O): Thenable<T> {
 	}
 }
 
-function doFn<T, O extends ActionOptions<any>>(options: O): ActionPromise<T, O> {
+function doFn<T, O extends ActionOptions<T>>(options: O): ActionPromise<T, O> {
 	if (!this.enabled) {
 		return decoratePromise(new Promise((resolve, reject) => {
 			reject(new Error(`Action "${String(this.type)}" not enabled`));
@@ -221,7 +221,6 @@ function doFn<T, O extends ActionOptions<any>>(options: O): ActionPromise<T, O> 
  */
 const factory = compose({
 	do: doFn,
-	state: undefined,
 	enabled: false,
 	disable() {
 		return new Promise((resolve) => {
@@ -245,7 +244,7 @@ const factory = compose({
 			resolve(false);
 		});
 	}
-}, function(options: ActionFactoryOptions<any, any, any>) {
+}, function(instance: Action<any, any, any>, options: ActionFactoryOptions<any, any, any>) {
 
 	if (!options.type) {
 		throw new TypeError('Missing action type, cannot create action.');
@@ -259,7 +258,7 @@ const factory = compose({
 		throw new TypeError(`Duplicate action type of "${String(options.type)}"`);
 	}
 
-	actionMethods.set(this, {
+	actionMethods.set(instance, {
 		do: options.do,
 		undo: options.undo,
 		redo: options.redo,
@@ -268,21 +267,21 @@ const factory = compose({
 
 	/* Makes the property read only, because we don't want
 	   accidental reassignment */
-	Object.defineProperty(this, 'type', {
+	Object.defineProperty(instance, 'type', {
 		value: options.type,
 		writable: false,
 		enumerable: true,
 		configurable: true
 	});
 
-	this.state = {};
+	instance.state = {};
 	if (options.state) {
-		assign(this.state, options.state);
+		assign(instance.state, options.state);
 	}
 
-	this.enabled = true;
+	instance.enabled = true;
 
-	actionMap[this.type] = this;
+	actionMap[instance.type] = instance;
 }) as ActionFactory;
 
 /**
