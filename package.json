@@ -12,8 +12,8 @@
 		"url": "https://github.com/dojo/actions.git"
 	},
 	"peerDependencies": {
-		"dojo-core": "",
-		"dojo-compose": ""
+		"dojo-core": "2.0.0-pre",
+		"dojo-compose": "2.0.0-pre"
 	},
 	"devDependencies": {
 		"codecov.io": "0.1.6",
