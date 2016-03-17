@@ -13,7 +13,7 @@ declare var Symbol: (name?: string) => symbol;
 const hasSymbol = typeof global.Symbol === 'function';
 
 registerSuite({
-	name: 'actions',
+	name: 'createAction',
 	basic() {
 		let called = false;
 
