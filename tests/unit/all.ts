@@ -1,1 +1,1 @@
-import './actions';
+import './createAction';

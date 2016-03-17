@@ -219,7 +219,7 @@ function doFn<T, O extends ActionOptions<T>>(options: O): ActionPromise<T, O> {
 /**
  * A factory that creates a new action
  */
-const factory = compose({
+const createAction = compose({
 	do: doFn,
 	enabled: false,
 	disable() {
@@ -319,4 +319,4 @@ export function isEnabled<T, O extends ActionOptions<any>, S extends ActionState
 	return isAction(action) ? action.enabled : actionMap[action] && actionMap[action].enabled;
 };
 
-export default factory;
+export default createAction;

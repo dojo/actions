@@ -1,6 +1,6 @@
 import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
-import actionFactory, { isEnabled, byType } from 'src/actions';
+import createAction, { isEnabled, byType } from 'src/createAction';
 import Promise from 'dojo-core/Promise';
 import global from 'dojo-core/global';
 
@@ -17,7 +17,7 @@ registerSuite({
 	basic() {
 		let called = false;
 
-		const actionFoo = actionFactory({
+		const actionFoo = createAction({
 			type: 'foo',
 			state: { foo: 'bar' },
 			do(options?: FooOptions): [string, string] {
@@ -35,7 +35,7 @@ registerSuite({
 		});
 	},
 	'.isEnabled()'() {
-		const actionFoo = actionFactory({
+		const actionFoo = createAction({
 			type: 'foo',
 			do() { }
 		});
@@ -52,7 +52,7 @@ registerSuite({
 		const foo = Symbol('foo');
 		let called = false;
 
-		const actionFoo = actionFactory({
+		const actionFoo = createAction({
 			type: foo,
 			do() {
 				called = true;
@@ -69,7 +69,7 @@ registerSuite({
 	'creation/destruction'() {
 		assert.notOk(byType('foo'), 'There should be no action typed as "foo"');
 
-		const actionFoo = actionFactory({
+		const actionFoo = createAction({
 			type: 'foo',
 			do() { }
 		});
@@ -84,7 +84,7 @@ registerSuite({
 	'creation of duplicate type throws'() {
 		let called = 'no';
 
-		const actionFoo1 = actionFactory({
+		const actionFoo1 = createAction({
 			type: 'foo',
 			do() {
 				called = 'actionFoo1';
@@ -92,7 +92,7 @@ registerSuite({
 		});
 
 		assert.throws(function() {
-			actionFactory({
+			createAction({
 				type: 'foo',
 				do() {
 					called = 'actionFoo2';
@@ -108,12 +108,12 @@ registerSuite({
 	},
 	'create of missing type throws'() {
 		assert.throws(() => {
-			actionFactory(<any> {});
+			createAction(<any> {});
 		});
 	},
 	'do': {
 		'persists state'() {
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				state: { foo: 'bar' },
 				do(options: FooOptions) {
@@ -130,7 +130,7 @@ registerSuite({
 			const dfd = this.async();
 			let called = false;
 
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() {
 					called = true;
@@ -151,7 +151,7 @@ registerSuite({
 			});
 		},
 		'returns value'() {
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do(options: FooOptions) {
 					return options.target + 'bar';
@@ -166,7 +166,7 @@ registerSuite({
 				});
 		},
 		'returns promise'() {
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do(options: FooOptions) {
 					return new Promise((resolve) => {
@@ -187,7 +187,7 @@ registerSuite({
 		'throws in method'() {
 			const dfd = this.async();
 
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() {
 					throw new Error('BOOM!');
@@ -205,7 +205,7 @@ registerSuite({
 		'rejects in method'() {
 			const dfd = this.async();
 
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() {
 					return new Promise((resolve, reject) => {
@@ -224,7 +224,7 @@ registerSuite({
 		},
 		'throws missing do'() {
 			assert.throws(() => {
-				actionFactory(<any> {
+				createAction(<any> {
 					type: 'foo'
 				});
 			}, TypeError, 'Missing action method "do", cannot create action.');
@@ -232,7 +232,7 @@ registerSuite({
 	},
 	'undo': {
 		'no method'() {
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() { }
 			});
@@ -246,7 +246,7 @@ registerSuite({
 				});
 		},
 		'preserves state'() {
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do(options: FooOptions) {
 					this.state = options.target;
@@ -268,7 +268,7 @@ registerSuite({
 
 			let called = false;
 
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() { },
 				undo() {
@@ -291,7 +291,7 @@ registerSuite({
 				});
 		},
 		'returns value'() {
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() {
 					return 'foo';
@@ -311,7 +311,7 @@ registerSuite({
 		},
 		'returns promise'() {
 			let called = 'zero';
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() { return false; },
 				undo() {
@@ -351,7 +351,7 @@ registerSuite({
 		},
 		'does not fire until do() resolved'() {
 			let called = 0;
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() {
 					return new Promise((resolve) => {
@@ -381,7 +381,7 @@ registerSuite({
 		'throws in method'() {
 			const dfd = this.async();
 
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() { },
 				undo() {
@@ -401,7 +401,7 @@ registerSuite({
 		'rejects in method'() {
 			const dfd = this.async();
 
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() { return false; },
 				undo() {
@@ -423,7 +423,7 @@ registerSuite({
 	},
 	'redo': {
 		'persists state'() {
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do(options: FooOptions) {
 					this.state = options.target;
@@ -443,7 +443,7 @@ registerSuite({
 		'calls do when no redo'() {
 			let called = 0;
 
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() {
 					called++;
@@ -461,7 +461,7 @@ registerSuite({
 		'undo/redo'() {
 			let called = 0;
 
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() {
 					called++;
@@ -491,7 +491,7 @@ registerSuite({
 
 			let called = false;
 
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() { },
 				redo() {
@@ -514,7 +514,7 @@ registerSuite({
 				});
 		},
 		'returns value'() {
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() {
 					return 'foo';
@@ -534,7 +534,7 @@ registerSuite({
 		},
 		'returns promise'() {
 			let called = 'zero';
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() { return false; },
 				redo() {
@@ -574,7 +574,7 @@ registerSuite({
 		},
 		'does not fire until do() resolved'() {
 			let called = 0;
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() {
 					return new Promise((resolve) => {
@@ -604,7 +604,7 @@ registerSuite({
 		'throws in method'() {
 			const dfd = this.async();
 
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() { },
 				redo() {
@@ -624,7 +624,7 @@ registerSuite({
 		'rejects in method'() {
 			const dfd = this.async();
 
-			const actionFoo = actionFactory({
+			const actionFoo = createAction({
 				type: 'foo',
 				do() { return false; },
 				redo() {
