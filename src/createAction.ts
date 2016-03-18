@@ -3,6 +3,7 @@
  * @module dojo-actions/actions
  */
 import compose, { ComposeFactory } from 'dojo-compose/compose';
+import Map from 'dojo-core/Map';
 import Promise, { Thenable, isThenable } from 'dojo-core/Promise';
 import WeakMap from 'dojo-core/WeakMap';
 import { assign } from 'dojo-core/lang';
@@ -10,7 +11,7 @@ import { assign } from 'dojo-core/lang';
 export type ActionLabel = string | symbol;
 
 /* Cannot use an indexer, because indexers can only be string | number */
-const actionMap: any = {};
+const actionMap = new Map<ActionLabel, Action<any, any, any>>();
 
 interface ActionMethods<T, O> {
 	do: (options?: O) => T | Promise<T>;
@@ -152,18 +153,19 @@ function decoratePromise<T, O>(p: Thenable<T> | Promise<T>, action: Action<T, O,
 }
 
 function undoFn<T>(): Thenable<T> {
-	const _undo = actionMethods.get(this).undo;
+	const action: Action<T, ActionOptions<T>, ActionState> = this;
+	const _undo = actionMethods.get(action).undo;
 	/* if undo is not defined, we will resolve with undefined */
 	if (!_undo) {
 		return new Promise((resolve) => { resolve(); });
 	}
-	if (!this.enabled) {
+	if (!action.enabled) {
 		return new Promise((resolve, reject) => {
-			reject(new Error(`Action "${this.type}" not enabled`));
+			reject(new Error(`Action "${action.type}" not enabled`));
 		});
 	}
 	try {
-		const result: T | Thenable<T> = _undo.call(this);
+		const result: T | Thenable<T> = _undo.call(action);
 		return isThenable(result) ? result : new Promise((resolve) => {
 			resolve(result);
 		});
@@ -176,15 +178,16 @@ function undoFn<T>(): Thenable<T> {
 }
 
 function redoFn<T, O extends ActionOptions<T>>(options?: O): Thenable<T> {
+	const action: Action<T, O, ActionState> = this;
 	/* If redo is undefined, we will automatically substitute do */
-	const _redo = actionMethods.get(this).redo || actionMethods.get(this).do;
-	if (!this.enabled) {
+	const _redo = actionMethods.get(action).redo || actionMethods.get(action).do;
+	if (!action.enabled) {
 		return new Promise((resolve, reject) => {
-			reject(new Error(`Action "${String(this.type)}" not enabled`));
+			reject(new Error(`Action "${String(action.type)}" not enabled`));
 		});
 	}
 	try {
-		const result: T | Thenable<T> = _redo.call(this, options);
+		const result: T | Thenable<T> = _redo.call(action, options);
 		return isThenable(result) ? result : new Promise((resolve) => {
 			resolve(result);
 		});
@@ -197,22 +200,23 @@ function redoFn<T, O extends ActionOptions<T>>(options?: O): Thenable<T> {
 }
 
 function doFn<T, O extends ActionOptions<T>>(options: O): ActionPromise<T, O> {
-	if (!this.enabled) {
+	const action: Action<T, O, ActionState> = this;
+	if (!action.enabled) {
 		return decoratePromise(new Promise((resolve, reject) => {
-			reject(new Error(`Action "${String(this.type)}" not enabled`));
-		}), this);
+			reject(new Error(`Action "${String(action.type)}" not enabled`));
+		}), action);
 	}
 	try {
-		const _do = actionMethods.get(this).do;
-		const result: T | Thenable<T> = _do.call(this, options);
+		const _do = actionMethods.get(action).do;
+		const result: T | Thenable<T> = _do.call(action, options);
 		return decoratePromise(isThenable(result) ? result : new Promise((resolve) => {
 			resolve(result);
-		}), this);
+		}), action);
 	}
 	catch (e) {
 		return decoratePromise(new Promise((resolve, reject) => {
 			reject(e);
-		}), this);
+		}), action);
 	}
 }
 
@@ -234,7 +238,7 @@ const createAction = compose({
 	},
 	destroy() {
 		return new Promise((resolve) => {
-			delete actionMap[this.type];
+			actionMap.delete(this.type);
 			Object.defineProperty(this, 'type', {
 				value: undefined
 			});
@@ -254,7 +258,7 @@ const createAction = compose({
 		throw new TypeError('Missing action method "do", cannot create action.');
 	}
 
-	if (options.type in actionMap) {
+	if (actionMap.has(options.type)) {
 		throw new TypeError(`Duplicate action type of "${String(options.type)}"`);
 	}
 
@@ -281,7 +285,7 @@ const createAction = compose({
 
 	instance.enabled = true;
 
-	actionMap[instance.type] = instance;
+	actionMap.set(instance.type, instance);
 }) as ActionFactory;
 
 /**
@@ -293,9 +297,7 @@ const createAction = compose({
  * @template S    (extends ActionState) the type of state for the action
  */
 export function byType<T, O extends ActionOptions<any>, S extends ActionState>(type: ActionLabel): Action<T, O, S> {
-	if (type in actionMap) {
-		return actionMap[type];
-	}
+	return actionMap.get(type);
 };
 
 /**
@@ -316,7 +318,7 @@ export function isAction(value: any): value is Action<any, any, any> {
  * @template S     (extends ActionState) the type of state for the action
  */
 export function isEnabled<T, O extends ActionOptions<any>, S extends ActionState>(action: ActionLabel | Action<T, O, S>): boolean {
-	return isAction(action) ? action.enabled : actionMap[action] && actionMap[action].enabled;
+	return isAction(action) ? action.enabled : actionMap.has(action) && actionMap.get(action).enabled;
 };
 
 export default createAction;
