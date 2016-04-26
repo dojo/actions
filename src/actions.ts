@@ -1,5 +1,6 @@
 import { Handle } from 'dojo-core/interfaces';
 import Map from 'dojo-core/Map';
+import Symbol from 'dojo-core/Symbol';
 import WeakMap from 'dojo-core/WeakMap';
 import { Action, ActionOptions, ActionState } from './createAction';
 
