@@ -17,6 +17,7 @@
 	],
 	"files": [
 		"./typings/tsd.d.ts",
+		"./src/actions.ts",
 		"./src/createAction.ts",
 		"./tests/functional/all.ts",
 		"./tests/intern-local.ts",
@@ -31,6 +32,7 @@
 		"./tests/typings/leadfoot/leadfoot.d.ts",
 		"./tests/typings/node/node.d.ts",
 		"./tests/typings/tsd.d.ts",
+		"./tests/unit/actions.ts",
 		"./tests/unit/all.ts",
 		"./tests/unit/createAction.ts"
 	]

@@ -1,1 +1,2 @@
+import './actions';
 import './createAction';

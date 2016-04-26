@@ -3,6 +3,7 @@ import createStateful, { Stateful, State } from 'dojo-compose/mixins/createState
 import { Thenable } from 'dojo-core/Promise';
 import Task from 'dojo-core/async/Task';
 import WeakMap from 'dojo-core/WeakMap';
+import { add, getType } from './actions';
 
 export interface DoOptions<T> {
 	[option: string]: any;
@@ -14,6 +15,7 @@ export interface ActionState extends State {
 }
 
 export interface Action<T, O extends DoOptions<T>, S extends ActionState> extends Stateful<S> {
+	type: string | symbol;
 	do(options?: O): Task<T>;
 	enable(): void;
 	disable(): void;
@@ -24,6 +26,7 @@ export type DoFunction<T> = (options?: DoOptions<T>) => T | Thenable<T>;
 export interface ActionOptions<T> {
 	do: DoFunction<T>;
 	enabled?: boolean;
+	type?: string | symbol;
 }
 
 export interface ActionFactory extends ComposeFactory<Action<any, DoOptions<any>, ActionState>, ActionOptions<any>> {
@@ -42,6 +45,25 @@ export function isTask<T>(value: any): value is Task<T> {
 const doFunctions = new WeakMap<Action<any, DoOptions<any>, ActionState>, DoFunction<any>>();
 
 const createAction: ActionFactory = compose({
+		get type(): string | symbol {
+			return getType(this);
+		},
+
+		set type(value: string | symbol) {
+			if (!value) {
+				throw new TypeError(`Cannot set action type to "${value}"`);
+			}
+			const action: Action<any, DoOptions<any>, ActionState> = this;
+			const currentType = action.type;
+			if (currentType && currentType !== value) {
+				throw new TypeError(`Action type already set as "${action.type}", cannot change`);
+			}
+			else if (currentType === value) {
+				return; /* already added */
+			}
+			action.own(add(action, value));
+		},
+
 		do(options?: DoOptions<any>): Task<any> {
 			const action: Action<any, DoOptions<any>, ActionState> = this;
 			const doFn = doFunctions.get(action);
@@ -74,6 +96,9 @@ const createAction: ActionFactory = compose({
 			}
 			doFunctions.set(instance, options.do);
 			instance.setState({ enabled: 'enabled' in options ? options.enabled : true });
+			if (options.type) {
+				instance.own(add(instance, options.type));
+			}
 			instance.own({
 				destroy() {
 					doFunctions.delete(instance);
