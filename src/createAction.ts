@@ -7,6 +7,9 @@ import WeakMap from 'dojo-core/WeakMap';
 import { add, getType } from './actions';
 
 export interface TargettedEventObject<T> extends EventObject {
+	/**
+	 * The target of the event
+	 */
 	target: T;
 }
 
@@ -14,7 +17,7 @@ export interface DoOptions<T> {
 	[option: string]: any;
 
 	/**
-	 * The target (subject) of the action
+	 * The target event (subject) of the action
 	 */
 	event?: TargettedEventObject<T>;
 }
