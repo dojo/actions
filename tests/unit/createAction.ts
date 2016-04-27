@@ -1,6 +1,6 @@
 import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
-import createAction, { isAction, ActionState } from 'src/createAction';
+import createAction, { isAction, ActionState, DoOptions } from 'src/createAction';
 import Promise from 'dojo-core/Promise';
 import Symbol from 'dojo-core/Symbol';
 import Task, { isTask } from 'dojo-core/async/Task';
@@ -226,13 +226,13 @@ registerSuite({
 			}), 20);
 		},
 		'with options'() {
-			const action = createAction<string, { target: string; }, ActionState>({
+			const action = createAction<string, DoOptions<string>, ActionState>({
 				do(options) {
-					return options.target;
+					return options.event.target;
 				}
 			});
 
-			return action.do({ target: 'foo' }).then((result) => {
+			return action.do({ event: { type: 'do', target: 'foo' } }).then((result) => {
 				assert.strictEqual(result, 'foo');
 			});
 		},

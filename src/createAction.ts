@@ -1,9 +1,14 @@
 import compose, { ComposeFactory } from 'dojo-compose/compose';
 import createStateful, { Stateful, State } from 'dojo-compose/mixins/createStateful';
+import { EventObject } from 'dojo-core/interfaces';
 import { Thenable } from 'dojo-core/Promise';
 import Task, { isTask } from 'dojo-core/async/Task';
 import WeakMap from 'dojo-core/WeakMap';
 import { add, getType } from './actions';
+
+export interface TargettedEventObject<T> extends EventObject {
+	target: T;
+}
 
 export interface DoOptions<T> {
 	[option: string]: any;
@@ -11,7 +16,7 @@ export interface DoOptions<T> {
 	/**
 	 * The target (subject) of the action
 	 */
-	target?: T;
+	event?: TargettedEventObject<T>;
 }
 
 export interface ActionState extends State {
