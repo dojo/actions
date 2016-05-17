@@ -2,7 +2,6 @@ import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
 import createAction, { isAction, ActionState, DoOptions } from 'src/createAction';
 import Promise from 'dojo-core/Promise';
-import Symbol from 'dojo-core/Symbol';
 import Task, { isTask } from 'dojo-core/async/Task';
 
 registerSuite({
@@ -48,42 +47,6 @@ registerSuite({
 				assert.isUndefined(result, 'result should be undefined');
 			});
 		},
-		'with type - string'() {
-			const action = createAction({
-				do() {},
-				type: 'foo'
-			});
-
-			assert.strictEqual(action.type, 'foo');
-			action.destroy();
-			assert.isUndefined(action.type);
-		},
-		'with type - symbol'() {
-			const fooSymbol = Symbol('foo');
-			const action = createAction({
-				do() {},
-				type: fooSymbol
-			});
-
-			assert.strictEqual(action.type, fooSymbol);
-			action.destroy();
-			assert.isUndefined(action.type);
-		},
-		'with type - duplicate'() {
-			const action = createAction({
-				do () {},
-				type: 'foo'
-			});
-
-			assert.throws(() => {
-				createAction({
-					do () {},
-					type: 'foo'
-				});
-			});
-
-			action.destroy();
-		},
 		'throws'() {
 			assert.throws(() => {
 				createAction();
@@ -92,73 +55,6 @@ registerSuite({
 			assert.throws(() => {
 				createAction(<any> {});
 			}, TypeError);
-		}
-	},
-	'type': {
-		'set/get - string'() {
-			const action = createAction({
-				do() {}
-			});
-
-			action.type = 'foo';
-			assert.strictEqual(action.type, 'foo');
-			assert.throws(() => {
-				action.type = 'bar';
-			}, TypeError);
-			action.type = 'foo';
-			action.destroy();
-			assert.isUndefined(action.type);
-		},
-		'set/get - symbol'() {
-			const fooSymbol = Symbol('foo');
-			const barSymbol = Symbol('bar');
-
-			const action = createAction({
-				do() {}
-			});
-
-			action.type = fooSymbol;
-			assert.strictEqual(action.type, fooSymbol);
-			assert.throws(() => {
-				action.type = barSymbol;
-			}, TypeError);
-			action.type = fooSymbol;
-			action.destroy();
-			assert.isUndefined(action.type);
-		},
-		'duplicate type'() {
-			const action1 = createAction({
-				do() {}
-			});
-
-			const action2 = createAction({
-				do() {}
-			});
-
-			action1.type = 'foo';
-			assert.throws(() => {
-				action2.type = 'foo';
-			}, TypeError);
-			action1.destroy();
-		},
-		'undefined or null or empty'() {
-			const action = createAction({
-				do() {}
-			});
-
-			assert.throws(() => {
-				action.type = undefined;
-			}, TypeError);
-
-			assert.throws(() => {
-				action.type = null;
-			}, TypeError);
-
-			assert.throws(() => {
-				action.type = '';
-			}, TypeError);
-
-			action.destroy();
 		}
 	},
 	'do()': {

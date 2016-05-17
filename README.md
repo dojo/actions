@@ -33,22 +33,6 @@ action
 
 You *must* specify a `do()` method when using the Action factory.  The Action will wrap the `.do()` method, ensuring that no matter what the return, it will return a `dojo-core/async/Task` which is a `Promise` with the ability to cancel.
 
-### Registry
-
-The `dojo-action/actions` provides an interface to be able to refer to types of actions that are currently available in the environment.  You can provide a `type` to an action, and then reference that:
-
-```typescript
-import createAction from 'dojo-actions/createAction';
-import { byType } from 'dojo-actions/action';
-
-createAction({
-    type: 'foo',
-    do() { /* do something */ }
-});
-
-byType('foo').do();
-```
-
 ### State
 
 Each Action has a `.state` object which contains any sort of mutatable state.  This is provided by the `dojo-compose/mixin/createStateful` mixin.  When the `.do()` method is invoked, it is scoped so that `this` is the calling action, and therefore `this.state` can be used to read from the state.
