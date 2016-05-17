@@ -92,7 +92,7 @@ export function isAction<T, O extends DoOptions<T>, S extends ActionState>(value
 const doFunctions = new WeakMap<Action<any, DoOptions<any>, ActionState>, DoFunction<any>>();
 
 /**
- * A factory which creates instaces of Action
+ * A factory which creates instances of Action
  */
 const createAction: ActionFactory = compose({
 		get type(): string | symbol {
