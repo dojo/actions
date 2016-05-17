@@ -4,7 +4,6 @@ import { EventObject } from 'dojo-core/interfaces';
 import { Thenable } from 'dojo-core/Promise';
 import Task, { isTask } from 'dojo-core/async/Task';
 import WeakMap from 'dojo-core/WeakMap';
-import { add, getType } from './actions';
 
 export interface TargettedEventObject<T> extends EventObject {
 	/**
@@ -30,11 +29,6 @@ export interface ActionState extends State {
 }
 
 export interface Action<T, O extends DoOptions<T>, S extends ActionState> extends Stateful<S> {
-	/**
-	 * The type of the action, which can be used to reference the action
-	 */
-	type: string | symbol;
-
 	/**
 	 * The main method that performs the action and returns a task which resolves when the action completes
 	 * @param options The options to be passed to the `do` method
@@ -64,11 +58,6 @@ export interface ActionOptions<T> {
 	 * Set the enabled state during construction
 	 */
 	enabled?: boolean;
-
-	/**
-	 * Set the action type during construction
-	 */
-	type?: string | symbol;
 }
 
 export interface ActionFactory extends ComposeFactory<Action<any, DoOptions<any>, ActionState>, ActionOptions<any>> {
@@ -92,28 +81,9 @@ export function isAction<T, O extends DoOptions<T>, S extends ActionState>(value
 const doFunctions = new WeakMap<Action<any, DoOptions<any>, ActionState>, DoFunction<any>>();
 
 /**
- * A factory which creates instaces of Action
+ * A factory which creates instances of Action
  */
 const createAction: ActionFactory = compose({
-		get type(): string | symbol {
-			return getType(this);
-		},
-
-		set type(value: string | symbol) {
-			if (!value) {
-				throw new TypeError(`Cannot set action type to "${value}"`);
-			}
-			const action: Action<any, DoOptions<any>, ActionState> = this;
-			const currentType = action.type;
-			if (currentType && currentType !== value) {
-				throw new TypeError(`Action type already set as "${action.type}", cannot change`);
-			}
-			else if (currentType === value) {
-				return; /* already added */
-			}
-			action.own(add(action, value));
-		},
-
 		do(options?: DoOptions<any>): Task<any> {
 			const action: Action<any, DoOptions<any>, ActionState> = this;
 			const doFn = doFunctions.get(action);
@@ -144,9 +114,6 @@ const createAction: ActionFactory = compose({
 			}
 			doFunctions.set(instance, options.do);
 			instance.setState({ enabled: 'enabled' in options ? options.enabled : true });
-			if (options.type) {
-				instance.own(add(instance, options.type));
-			}
 			instance.own({
 				destroy() {
 					doFunctions.delete(instance);
