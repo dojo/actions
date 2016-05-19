@@ -43,7 +43,7 @@ export const initialBaseUrl: string = (function () {
 // loader
 export const loaders = {
 	// 'host-browser': '../loader/dist/loader.js',
-	'host-browser': 'node_modules/dojo-loader/loader.js',
+	'host-browser': 'node_modules/dojo-loader/dist/umd/loader.js',
 	'host-node': 'dojo-loader'
 };
 
@@ -55,7 +55,7 @@ export const loaderOptions = {
 		{ name: 'src', location: '_build/src' },
 		{ name: 'tests', location: '_build/tests' },
 		{ name: 'dojo-core', location: 'node_modules/dojo-core' },
-		{ name: 'dojo-compose', location: 'node_modules/dojo-compose' },
+		{ name: 'dojo-compose', location: 'node_modules/dojo-compose/dist/umd' },
 		{ name: 'dojo', location: 'node_modules/intern/node_modules/dojo' }
 	]
 };
