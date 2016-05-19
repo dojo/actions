@@ -29,6 +29,7 @@ registerSuite({
 			assert.isFunction(action.do);
 			assert.isFunction(action.enable);
 			assert.isFunction(action.disable);
+			assert.isFunction(action.register);
 			return action.do().then(() => {
 				assert.strictEqual(count, 1, 'do should have been called once');
 			});
@@ -175,6 +176,42 @@ registerSuite({
 				});
 			});
 		});
+	},
+	'register()': {
+		'returns handle'() {
+			let actual = {};
+			const handle = { destroy() {} };
+			const action = createAction({
+				do() {},
+				register(registry: Object) {
+					actual = registry;
+					return handle;
+				}
+			});
+
+			const registry = {};
+			assert.strictEqual(action.register(registry), handle);
+			assert.strictEqual(actual, registry);
+		},
+		'returns void'() {
+			let actual = {};
+			const action = createAction({
+				do() {},
+				register(registry: Object) {
+					actual = registry;
+				}
+			});
+
+			const registry = {};
+			assert.isUndefined(action.register(registry));
+			assert.strictEqual(actual, registry);
+		},
+		'no callback'() {
+			const action = createAction({
+				do() {}
+			});
+			assert.isUndefined(action.register({}));
+		}
 	},
 	'destroy()'() {
 		let called = 0;

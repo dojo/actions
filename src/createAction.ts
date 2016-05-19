@@ -1,6 +1,6 @@
 import compose, { ComposeFactory } from 'dojo-compose/compose';
 import createStateful, { Stateful, StatefulOptions, State } from 'dojo-compose/mixins/createStateful';
-import { EventObject } from 'dojo-core/interfaces';
+import { EventObject, Handle } from 'dojo-core/interfaces';
 import { Thenable } from 'dojo-core/Promise';
 import Task, { isTask } from 'dojo-core/async/Task';
 import WeakMap from 'dojo-core/WeakMap';
@@ -47,6 +47,17 @@ export interface ActionMixin<T, O extends DoOptions<T>> {
 	 * Disable the task if enabled
 	 */
 	disable(): void;
+
+	/**
+	 * A method which may be called after the action is registered with a registry
+	 *
+	 * Normally actions may be registered multiple times, with multiple registries. Destroying an action won't cause
+	 * it to be deregistered.
+	 *
+	 * @param registry A registry. Implementations will need to cast to their expected registry object
+	 * @return May return a handle that should be destroyed when the action is deregistered from its registry
+	 */
+	register(registry: Object): Handle | void;
 }
 
 export type Action<T, O extends DoOptions<T>, S extends ActionState> = Stateful<S> & ActionMixin<T, O>;
@@ -63,6 +74,11 @@ export interface ActionOptions<T, S extends ActionState> extends StatefulOptions
 	 * Set the enabled state during construction
 	 */
 	enabled?: boolean;
+
+	/**
+	 * The method that is invoked when `register()` is called
+	 */
+	register?: (registry: Object) => Handle | void;
 }
 
 export interface ActionFactory extends ComposeFactory<Action<any, DoOptions<any>, ActionState>, ActionOptions<any, ActionState>> {
@@ -84,6 +100,11 @@ export function isAction<T, O extends DoOptions<T>, S extends ActionState>(value
  * A weak map of `do` methods
  */
 const doFunctions = new WeakMap<AnyAction, DoFunction<any>>();
+
+/**
+ * A weak map of `register` methods
+ */
+const registerFunctions = new WeakMap<AnyAction, (registry: Object) => Handle | void>();
 
 /**
  * A factory which creates instances of Action
@@ -109,19 +130,30 @@ const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any>>, Ac
 			if (action.state.enabled) {
 				action.setState({ enabled: false });
 			}
+		},
+		register(registry: Object): Handle | void {
+			const action: AnyAction = this;
+			const registerFn = registerFunctions.get(action);
+			if (registerFn) {
+				return registerFn.call(action, registry);
+			}
 		}
 	})
 	.mixin({
 		mixin: createStateful,
-		initialize(instance: AnyAction, { do: doFn, enabled = true }: ActionOptions<any, ActionState>) {
+		initialize(instance: AnyAction, { do: doFn, enabled = true, register }: ActionOptions<any, ActionState>) {
 			if (!doFn) {
 				throw new TypeError(`'options.do' required during creation.`);
 			}
 			doFunctions.set(instance, doFn);
 			instance.setState({ enabled });
+			if (register) {
+				registerFunctions.set(instance, register);
+			}
 			instance.own({
 				destroy() {
 					doFunctions.delete(instance);
+					registerFunctions.delete(instance);
 				}
 			});
 		}
