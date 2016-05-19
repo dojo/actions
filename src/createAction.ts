@@ -1,5 +1,5 @@
 import compose, { ComposeFactory } from 'dojo-compose/compose';
-import createStateful, { Stateful, State } from 'dojo-compose/mixins/createStateful';
+import createStateful, { Stateful, StatefulOptions, State } from 'dojo-compose/mixins/createStateful';
 import { EventObject } from 'dojo-core/interfaces';
 import { Thenable } from 'dojo-core/Promise';
 import Task, { isTask } from 'dojo-core/async/Task';
@@ -50,7 +50,7 @@ export type Action<T, O extends DoOptions<T>, S extends ActionState> = Stateful<
 
 export type DoFunction<T> = (options?: DoOptions<T>) => T | Thenable<T>;
 
-export interface ActionOptions<T> {
+export interface ActionOptions<T, S extends ActionState> extends StatefulOptions<S> {
 	/**
 	 * The method that is invoked when `do()` is called and the action is enabled
 	 */
@@ -62,12 +62,12 @@ export interface ActionOptions<T> {
 	enabled?: boolean;
 }
 
-export interface ActionFactory extends ComposeFactory<Action<any, DoOptions<any>, ActionState>, ActionOptions<any>> {
+export interface ActionFactory extends ComposeFactory<Action<any, DoOptions<any>, ActionState>, ActionOptions<any, ActionState>> {
 	/**
 	 * Create a new instance of an Action, using the supplied options
 	 * @param options The options used to construct the Action
 	 */
-	<T, O extends DoOptions<T>, S extends ActionState>(options: ActionOptions<T>): Action<T, O, S>;
+	<T, O extends DoOptions<T>, S extends ActionState>(options: ActionOptions<T, S>): Action<T, O, S>;
 }
 
 /**
@@ -85,7 +85,7 @@ const doFunctions = new WeakMap<Action<any, DoOptions<any>, ActionState>, DoFunc
 /**
  * A factory which creates instances of Action
  */
-const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any>>, ActionOptions<any>>({
+const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any>>, ActionOptions<any, ActionState>>({
 		do(options?: DoOptions<any>): Task<any> {
 			const action: Action<any, DoOptions<any>, ActionState> = this;
 			const doFn = doFunctions.get(action);
@@ -110,7 +110,7 @@ const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any>>, Ac
 	})
 	.mixin({
 		mixin: createStateful,
-		initialize(instance: Action<any, DoOptions<any>, ActionState>, options: ActionOptions<any>) {
+		initialize(instance: Action<any, DoOptions<any>, ActionState>, options: ActionOptions<any, ActionState>) {
 			if (!options || !options.do) {
 				throw new TypeError(`'options.do' required during creation.`);
 			}
