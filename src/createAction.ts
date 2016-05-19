@@ -28,7 +28,7 @@ export interface ActionState extends State {
 	enabled?: boolean;
 }
 
-interface ActionMixin<T, O extends DoOptions<T>> {
+export interface ActionMixin<T, O extends DoOptions<T>> {
 	/**
 	 * The main method that performs the action and returns a task which resolves when the action completes
 	 * @param options The options to be passed to the `do` method
