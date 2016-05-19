@@ -28,7 +28,7 @@ export interface ActionState extends State {
 	enabled?: boolean;
 }
 
-export interface Action<T, O extends DoOptions<T>, S extends ActionState> extends Stateful<S> {
+interface ActionMixin<T, O extends DoOptions<T>> {
 	/**
 	 * The main method that performs the action and returns a task which resolves when the action completes
 	 * @param options The options to be passed to the `do` method
@@ -45,6 +45,8 @@ export interface Action<T, O extends DoOptions<T>, S extends ActionState> extend
 	 */
 	disable(): void;
 }
+
+export type Action<T, O extends DoOptions<T>, S extends ActionState> = Stateful<S> & ActionMixin<T, O>;
 
 export type DoFunction<T> = (options?: DoOptions<T>) => T | Thenable<T>;
 
@@ -83,7 +85,7 @@ const doFunctions = new WeakMap<Action<any, DoOptions<any>, ActionState>, DoFunc
 /**
  * A factory which creates instances of Action
  */
-const createAction: ActionFactory = compose({
+const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any>>, ActionOptions<any>>({
 		do(options?: DoOptions<any>): Task<any> {
 			const action: Action<any, DoOptions<any>, ActionState> = this;
 			const doFn = doFunctions.get(action);
