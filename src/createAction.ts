@@ -113,12 +113,12 @@ const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any>>, Ac
 	})
 	.mixin({
 		mixin: createStateful,
-		initialize(instance: AnyAction, options: ActionOptions<any, ActionState>) {
-			if (!options || !options.do) {
+		initialize(instance: AnyAction, { do: doFn, enabled = true }: ActionOptions<any, ActionState>) {
+			if (!doFn) {
 				throw new TypeError(`'options.do' required during creation.`);
 			}
-			doFunctions.set(instance, options.do);
-			instance.setState({ enabled: 'enabled' in options ? options.enabled : true });
+			doFunctions.set(instance, doFn);
+			instance.setState({ enabled });
 			instance.own({
 				destroy() {
 					doFunctions.delete(instance);
