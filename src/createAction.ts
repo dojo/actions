@@ -5,6 +5,9 @@ import { Thenable } from 'dojo-core/Promise';
 import Task, { isTask } from 'dojo-core/async/Task';
 import WeakMap from 'dojo-core/WeakMap';
 
+// Helper to avoid repetition
+type AnyAction = Action<any, DoOptions<any>, ActionState>;
+
 export interface TargettedEventObject<T> extends EventObject {
 	/**
 	 * The target of the event
@@ -80,14 +83,14 @@ export function isAction<T, O extends DoOptions<T>, S extends ActionState>(value
 /**
  * A weak map of `do` methods
  */
-const doFunctions = new WeakMap<Action<any, DoOptions<any>, ActionState>, DoFunction<any>>();
+const doFunctions = new WeakMap<AnyAction, DoFunction<any>>();
 
 /**
  * A factory which creates instances of Action
  */
 const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any>>, ActionOptions<any, ActionState>>({
 		do(options?: DoOptions<any>): Task<any> {
-			const action: Action<any, DoOptions<any>, ActionState> = this;
+			const action: AnyAction = this;
 			const doFn = doFunctions.get(action);
 			if (doFn && action.state.enabled) {
 				const result = doFn.call(action, options);
@@ -96,13 +99,13 @@ const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any>>, Ac
 			return Task.resolve();
 		},
 		enable(): void {
-			const action: Action<any, DoOptions<any>, ActionState> = this;
+			const action: AnyAction = this;
 			if (!action.state.enabled) {
 				action.setState({ enabled: true });
 			}
 		},
 		disable(): void {
-			const action: Action<any, DoOptions<any>, ActionState> = this;
+			const action: AnyAction = this;
 			if (action.state.enabled) {
 				action.setState({ enabled: false });
 			}
@@ -110,7 +113,7 @@ const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any>>, Ac
 	})
 	.mixin({
 		mixin: createStateful,
-		initialize(instance: Action<any, DoOptions<any>, ActionState>, options: ActionOptions<any, ActionState>) {
+		initialize(instance: AnyAction, options: ActionOptions<any, ActionState>) {
 			if (!options || !options.do) {
 				throw new TypeError(`'options.do' required during creation.`);
 			}
