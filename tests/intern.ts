@@ -12,14 +12,14 @@ export const proxyUrl = 'http://localhost:9000/';
 export const capabilities = {
 	'browserstack.debug': false,
 	project: 'Dojo 2',
-	name: 'dojo-<< package-name >>'
+	name: 'dojo-actions>'
 };
 
 // Browsers to run integration testing against. Note that version numbers must be strings if used with Sauce
 // OnDemand. Options that will be permutated are browserName, version, platform, and platformVersion; any other
 // capabilities options specified for an environment will be copied as-is
 export const environments = [
-	{ browserName: 'internet explorer', version: [ '9', '10', '11' ], platform: 'WINDOWS' },
+	{ browserName: 'internet explorer', version: [ '10', '11' ], platform: 'WINDOWS' },
 	{ browserName: 'firefox', platform: 'WINDOWS' },
 	{ browserName: 'chrome', platform: 'WINDOWS' }/*,
 	{ browserName: 'Safari', version: '9', platform: 'OS X' }*/
@@ -54,7 +54,7 @@ export const loaderOptions = {
 	packages: [
 		{ name: 'src', location: '_build/src' },
 		{ name: 'tests', location: '_build/tests' },
-		{ name: 'dojo-core', location: 'node_modules/dojo-core' },
+		{ name: 'dojo-core', location: 'node_modules/dojo-core/dist/umd' },
 		{ name: 'dojo-compose', location: 'node_modules/dojo-compose/dist/umd' },
 		{ name: 'dojo', location: 'node_modules/intern/node_modules/dojo' }
 	]

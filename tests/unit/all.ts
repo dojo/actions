@@ -1,1 +1,2 @@
 import './createAction';
+import './main';
