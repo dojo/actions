@@ -1,6 +1,6 @@
 import compose, { ComposeFactory } from 'dojo-compose/compose';
 import createStateful, { Stateful, StatefulOptions, State } from 'dojo-compose/mixins/createStateful';
-import { EventObject, Handle } from 'dojo-core/interfaces';
+import { EventObject } from 'dojo-core/interfaces';
 import { Thenable } from 'dojo-core/Promise';
 import Task, { isTask } from 'dojo-core/async/Task';
 import WeakMap from 'dojo-core/WeakMap';
@@ -49,15 +49,15 @@ export interface ActionMixin<T, O extends DoOptions<T>> {
 	disable(): void;
 
 	/**
-	 * A method which may be called after the action is registered with a registry
+	 * A method which may be called to configure the action after it's been created.
 	 *
-	 * Normally actions may be registered multiple times, with multiple registries. Destroying an action won't cause
-	 * it to be deregistered.
+	 * It's up to the implementation to decide what happens if this method is called multiple times. Implementations
+	 * may throw or return a rejected promise.
 	 *
-	 * @param registry A registry. Implementations will need to cast to their expected registry object
-	 * @return May return a handle that should be destroyed when the action is deregistered from its registry
+	 * @param configuration The configuration. Implementations will need to cast to their expected configuration object
+	 * @return May return a promise in case configuration is asynchronous
 	 */
-	register(registry: Object): Handle | void;
+	configure(configuration: Object): Promise<void> | void;
 }
 
 export type Action<T, O extends DoOptions<T>, S extends ActionState> = Stateful<S> & ActionMixin<T, O>;
@@ -76,9 +76,9 @@ export interface ActionOptions<T, S extends ActionState> extends StatefulOptions
 	enabled?: boolean;
 
 	/**
-	 * The method that is invoked when `register()` is called
+	 * The method that is invoked when `configure()` is called
 	 */
-	register?: (registry: Object) => Handle | void;
+	configure?: (configuration: Object) => Promise<void> | void;
 }
 
 export interface ActionFactory extends ComposeFactory<Action<any, DoOptions<any>, ActionState>, ActionOptions<any, ActionState>> {
@@ -102,9 +102,9 @@ export function isAction<T, O extends DoOptions<T>, S extends ActionState>(value
 const doFunctions = new WeakMap<AnyAction, DoFunction<any>>();
 
 /**
- * A weak map of `register` methods
+ * A weak map of `configure` methods
  */
-const registerFunctions = new WeakMap<AnyAction, (registry: Object) => Handle | void>();
+const configureFunctions = new WeakMap<AnyAction, (configuration: Object) => Promise<void> | void>();
 
 /**
  * A factory which creates instances of Action
@@ -131,29 +131,29 @@ const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any>>, Ac
 				action.setState({ enabled: false });
 			}
 		},
-		register(registry: Object): Handle | void {
+		configure(configuration: Object): Promise<void> | void {
 			const action: AnyAction = this;
-			const registerFn = registerFunctions.get(action);
-			if (registerFn) {
-				return registerFn.call(action, registry);
+			const configureFn = configureFunctions.get(action);
+			if (configureFn) {
+				return configureFn.call(action, configuration);
 			}
 		}
 	})
 	.mixin({
 		mixin: createStateful,
-		initialize(instance: AnyAction, { do: doFn, enabled = true, register }: ActionOptions<any, ActionState>) {
+		initialize(instance: AnyAction, { do: doFn, enabled = true, configure }: ActionOptions<any, ActionState>) {
 			if (!doFn) {
 				throw new TypeError(`'options.do' required during creation.`);
 			}
 			doFunctions.set(instance, doFn);
 			instance.setState({ enabled });
-			if (register) {
-				registerFunctions.set(instance, register);
+			if (configure) {
+				configureFunctions.set(instance, configure);
 			}
 			instance.own({
 				destroy() {
 					doFunctions.delete(instance);
-					registerFunctions.delete(instance);
+					configureFunctions.delete(instance);
 				}
 			});
 		}
