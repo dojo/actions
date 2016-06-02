@@ -5,8 +5,10 @@ import { Thenable } from 'dojo-core/Promise';
 import Task, { isTask } from 'dojo-core/async/Task';
 import WeakMap from 'dojo-core/WeakMap';
 
-// Helper to avoid repetition
-type AnyAction = Action<any, DoOptions<any>, ActionState>;
+/**
+ * A type alias to a "generic" action
+ */
+export type AnyAction = Action<any, DoOptions<any, TargettedEventObject<any>>, ActionState>;
 
 export interface TargettedEventObject<T> extends EventObject {
 	/**
@@ -15,13 +17,13 @@ export interface TargettedEventObject<T> extends EventObject {
 	target: T;
 }
 
-export interface DoOptions<T> {
+export interface DoOptions<T, E extends TargettedEventObject<T>> {
 	[option: string]: any;
 
 	/**
 	 * The target event (subject) of the action
 	 */
-	event?: TargettedEventObject<T>;
+	event?: E;
 }
 
 export interface ActionState extends State {
@@ -31,7 +33,7 @@ export interface ActionState extends State {
 	enabled?: boolean;
 }
 
-export interface ActionMixin<T, O extends DoOptions<T>> {
+export interface ActionMixin<T, O extends DoOptions<T, TargettedEventObject<T>>> {
 	/**
 	 * The main method that performs the action and returns a task which resolves when the action completes
 	 * @param options The options to be passed to the `do` method
@@ -57,12 +59,12 @@ export interface ActionMixin<T, O extends DoOptions<T>> {
 	 * @param configuration The configuration. Implementations will need to cast to their expected configuration object
 	 * @return May return a promise in case configuration is asynchronous
 	 */
-	configure(configuration: { [options: string]: any }): Promise<void> | void;
+	configure(options: { [option: string]: any }): Promise<void> | void;
 }
 
-export type Action<T, O extends DoOptions<T>, S extends ActionState> = Stateful<S> & ActionMixin<T, O>;
+export type Action<T, O extends DoOptions<T, TargettedEventObject<T>>, S extends ActionState> = Stateful<S> & ActionMixin<T, O>;
 
-export type DoFunction<T> = (options?: DoOptions<T>) => T | Thenable<T>;
+export type DoFunction<T> = (options?: DoOptions<T, TargettedEventObject<T>>) => T | Thenable<T>;
 
 export interface ActionOptions<T, S extends ActionState> extends StatefulOptions<S> {
 	/**
@@ -78,21 +80,21 @@ export interface ActionOptions<T, S extends ActionState> extends StatefulOptions
 	/**
 	 * The method that is invoked when `configure()` is called
 	 */
-	configure?: (configuration: Object) => Promise<void> | void;
+	configure?(options: { [option: string]: any }): Promise<void> | void;
 }
 
-export interface ActionFactory extends ComposeFactory<Action<any, DoOptions<any>, ActionState>, ActionOptions<any, ActionState>> {
+export interface ActionFactory extends ComposeFactory<Action<any, DoOptions<any, any>, ActionState>, ActionOptions<any, ActionState>> {
 	/**
 	 * Create a new instance of an Action, using the supplied options
 	 * @param options The options used to construct the Action
 	 */
-	<T, O extends DoOptions<T>, S extends ActionState>(options: ActionOptions<T, S>): Action<T, O, S>;
+	<T, O extends DoOptions<T, TargettedEventObject<T>>, S extends ActionState>(options: ActionOptions<T, S>): Action<T, O, S>;
 }
 
 /**
  * A type guard that validates the object passed is an Action
  */
-export function isAction<T, O extends DoOptions<T>, S extends ActionState>(value: any): value is Action<T, O, S> {
+export function isAction<T, O extends DoOptions<T, TargettedEventObject<T>>, S extends ActionState>(value: any): value is Action<T, O, S> {
 	return typeof value === 'object' && typeof value.do === 'function';
 }
 
@@ -109,8 +111,8 @@ const configureFunctions = new WeakMap<AnyAction, (configuration: Object) => Pro
 /**
  * A factory which creates instances of Action
  */
-const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any>>, ActionOptions<any, ActionState>>({
-		do(options?: DoOptions<any>): Task<any> {
+const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any, TargettedEventObject<any>>>, ActionOptions<any, ActionState>>({
+		do(options?: DoOptions<any, TargettedEventObject<any>>): Task<any> {
 			const action: AnyAction = this;
 			const doFn = doFunctions.get(action);
 			if (doFn && action.state.enabled) {

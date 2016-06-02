@@ -1,6 +1,6 @@
 import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
-import createAction, { isAction, ActionState, DoOptions } from 'src/createAction';
+import createAction, { isAction, ActionState, DoOptions, TargettedEventObject } from 'src/createAction';
 import Promise from 'dojo-core/Promise';
 import Task, { isTask } from 'dojo-core/async/Task';
 
@@ -123,7 +123,7 @@ registerSuite({
 			}), 20);
 		},
 		'with options'() {
-			const action = createAction<string, DoOptions<string>, ActionState>({
+			const action = createAction<string, DoOptions<string, TargettedEventObject<string>>, ActionState>({
 				do(options) {
 					return options.event.target;
 				}
