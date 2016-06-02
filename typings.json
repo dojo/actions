@@ -1,5 +1,5 @@
 {
-	"name": "dojo-compose",
+	"name": "dojo-actions",
 	"peerDependencies": {
 		"@reactivex/RxJS": "npm:@reactivex/rxjs"
 	},
