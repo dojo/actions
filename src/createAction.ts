@@ -57,7 +57,7 @@ export interface ActionMixin<T, O extends DoOptions<T>> {
 	 * @param configuration The configuration. Implementations will need to cast to their expected configuration object
 	 * @return May return a promise in case configuration is asynchronous
 	 */
-	configure(configuration: Object): Promise<void> | void;
+	configure(configuration: { [options: string]: any }): Promise<void> | void;
 }
 
 export type Action<T, O extends DoOptions<T>, S extends ActionState> = Stateful<S> & ActionMixin<T, O>;
