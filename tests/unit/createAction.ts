@@ -29,6 +29,7 @@ registerSuite({
 			assert.isFunction(action.do);
 			assert.isFunction(action.enable);
 			assert.isFunction(action.disable);
+			assert.isFunction(action.configure);
 			return action.do().then(() => {
 				assert.strictEqual(count, 1, 'do should have been called once');
 			});
@@ -175,6 +176,42 @@ registerSuite({
 				});
 			});
 		});
+	},
+	'configure()': {
+		'returns promise'() {
+			let actual = {};
+			const promise = Promise.resolve();
+			const action = createAction({
+				do() {},
+				configure(configuration: Object) {
+					actual = configuration;
+					return promise;
+				}
+			});
+
+			const configuration = {};
+			assert.strictEqual(action.configure(configuration), promise);
+			assert.strictEqual(actual, configuration);
+		},
+		'returns void'() {
+			let actual = {};
+			const action = createAction({
+				do() {},
+				configure(configuration: Object) {
+					actual = configuration;
+				}
+			});
+
+			const configuration = {};
+			assert.isUndefined(action.configure(configuration));
+			assert.strictEqual(actual, configuration);
+		},
+		'no callback'() {
+			const action = createAction({
+				do() {}
+			});
+			assert.isUndefined(action.configure({}));
+		}
 	},
 	'destroy()'() {
 		let called = 0;

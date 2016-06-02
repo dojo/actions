@@ -5,6 +5,9 @@ import { Thenable } from 'dojo-core/Promise';
 import Task, { isTask } from 'dojo-core/async/Task';
 import WeakMap from 'dojo-core/WeakMap';
 
+// Helper to avoid repetition
+type AnyAction = Action<any, DoOptions<any>, ActionState>;
+
 export interface TargettedEventObject<T> extends EventObject {
 	/**
 	 * The target of the event
@@ -44,6 +47,17 @@ export interface ActionMixin<T, O extends DoOptions<T>> {
 	 * Disable the task if enabled
 	 */
 	disable(): void;
+
+	/**
+	 * A method which may be called to configure the action after it's been created.
+	 *
+	 * It's up to the implementation to decide what happens if this method is called multiple times. Implementations
+	 * may throw or return a rejected promise.
+	 *
+	 * @param configuration The configuration. Implementations will need to cast to their expected configuration object
+	 * @return May return a promise in case configuration is asynchronous
+	 */
+	configure(configuration: { [options: string]: any }): Promise<void> | void;
 }
 
 export type Action<T, O extends DoOptions<T>, S extends ActionState> = Stateful<S> & ActionMixin<T, O>;
@@ -60,6 +74,11 @@ export interface ActionOptions<T, S extends ActionState> extends StatefulOptions
 	 * Set the enabled state during construction
 	 */
 	enabled?: boolean;
+
+	/**
+	 * The method that is invoked when `configure()` is called
+	 */
+	configure?: (configuration: Object) => Promise<void> | void;
 }
 
 export interface ActionFactory extends ComposeFactory<Action<any, DoOptions<any>, ActionState>, ActionOptions<any, ActionState>> {
@@ -80,14 +99,19 @@ export function isAction<T, O extends DoOptions<T>, S extends ActionState>(value
 /**
  * A weak map of `do` methods
  */
-const doFunctions = new WeakMap<Action<any, DoOptions<any>, ActionState>, DoFunction<any>>();
+const doFunctions = new WeakMap<AnyAction, DoFunction<any>>();
+
+/**
+ * A weak map of `configure` methods
+ */
+const configureFunctions = new WeakMap<AnyAction, (configuration: Object) => Promise<void> | void>();
 
 /**
  * A factory which creates instances of Action
  */
 const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any>>, ActionOptions<any, ActionState>>({
 		do(options?: DoOptions<any>): Task<any> {
-			const action: Action<any, DoOptions<any>, ActionState> = this;
+			const action: AnyAction = this;
 			const doFn = doFunctions.get(action);
 			if (doFn && action.state.enabled) {
 				const result = doFn.call(action, options);
@@ -96,29 +120,40 @@ const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any>>, Ac
 			return Task.resolve();
 		},
 		enable(): void {
-			const action: Action<any, DoOptions<any>, ActionState> = this;
+			const action: AnyAction = this;
 			if (!action.state.enabled) {
 				action.setState({ enabled: true });
 			}
 		},
 		disable(): void {
-			const action: Action<any, DoOptions<any>, ActionState> = this;
+			const action: AnyAction = this;
 			if (action.state.enabled) {
 				action.setState({ enabled: false });
+			}
+		},
+		configure(configuration: Object): Promise<void> | void {
+			const action: AnyAction = this;
+			const configureFn = configureFunctions.get(action);
+			if (configureFn) {
+				return configureFn.call(action, configuration);
 			}
 		}
 	})
 	.mixin({
 		mixin: createStateful,
-		initialize(instance: Action<any, DoOptions<any>, ActionState>, options: ActionOptions<any, ActionState>) {
-			if (!options || !options.do) {
+		initialize(instance: AnyAction, { do: doFn, enabled = true, configure }: ActionOptions<any, ActionState>) {
+			if (!doFn) {
 				throw new TypeError(`'options.do' required during creation.`);
 			}
-			doFunctions.set(instance, options.do);
-			instance.setState({ enabled: 'enabled' in options ? options.enabled : true });
+			doFunctions.set(instance, doFn);
+			instance.setState({ enabled });
+			if (configure) {
+				configureFunctions.set(instance, configure);
+			}
 			instance.own({
 				destroy() {
 					doFunctions.delete(instance);
+					configureFunctions.delete(instance);
 				}
 			});
 		}
