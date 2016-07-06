@@ -1,7 +1,7 @@
 import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
 import createAction, { isAction, ActionState, DoOptions, TargettedEventObject } from 'src/createAction';
-import Promise from 'dojo-core/Promise';
+import Promise from 'dojo-shim/Promise';
 import Task, { isTask } from 'dojo-core/async/Task';
 
 registerSuite({

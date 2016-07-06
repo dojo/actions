@@ -18,8 +18,10 @@
 	},
 	"typings": "./dist/umd/dojo-actions.d.ts",
 	"peerDependencies": {
-		"dojo-core": ">=2.0.0-alpha.7",
-		"dojo-compose": ">=2.0.0-beta.4"
+		"dojo-core": ">=2.0.0-alpha.8",
+		"dojo-compose": ">=2.0.0-beta.4",
+		"dojo-has": ">=2.0.0-alpha.1",
+		"dojo-shim": ">=2.0.0-alpha.1"
 	},
 	"devDependencies": {
 		"@reactivex/rxjs": "5.0.0-beta.6",

@@ -1,9 +1,10 @@
 import compose, { ComposeFactory } from 'dojo-compose/compose';
 import createStateful, { Stateful, StatefulOptions, State } from 'dojo-compose/mixins/createStateful';
 import { EventObject } from 'dojo-core/interfaces';
-import Promise, { Thenable } from 'dojo-core/Promise';
 import Task, { isTask } from 'dojo-core/async/Task';
-import WeakMap from 'dojo-core/WeakMap';
+import { Thenable } from 'dojo-shim/interfaces';
+import Promise from 'dojo-shim/Promise';
+import WeakMap from 'dojo-shim/WeakMap';
 
 /**
  * A type alias to a "generic" action

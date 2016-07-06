@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/dojo/actions.svg?branch=master)](https://travis-ci.org/dojo/actions)
 [![codecov.io](http://codecov.io/github/dojo/actions/coverage.svg?branch=master)](http://codecov.io/github/dojo/actions?branch=master)
+[![npm version](https://badge.fury.io/js/dojo-actions.svg)](http://badge.fury.io/js/dojo-actions)
 
 A command like library for Dojo 2 Applications.
 
