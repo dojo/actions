@@ -85,7 +85,7 @@ registerSuite({
 		},
 		'returns task'() {
 			const dfd = this.async();
-			let task: Task<string>;
+			let task: Task<string> = <any> undefined;
 			let count = 0;
 			let executorCount = 0;
 			let finallyCount = 0;
@@ -124,7 +124,7 @@ registerSuite({
 		},
 		'with options'() {
 			const action = createAction<string, DoOptions<string, TargettedEventObject<string>>, ActionState>({
-				do(options) {
+				do(options: any) {
 					return options.event.target;
 				}
 			});
