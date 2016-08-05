@@ -1,6 +1,6 @@
 import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
-import createAction, { isAction, ActionState, DoOptions, TargettedEventObject } from 'src/createAction';
+import createAction, { isAction, AnyAction, ActionState, DoOptions, TargettedEventObject } from 'src/createAction';
 import Promise from 'dojo-shim/Promise';
 import Task, { isTask } from 'dojo-core/async/Task';
 
@@ -83,7 +83,7 @@ registerSuite({
 				assert.strictEqual(result, 'foo');
 			});
 		},
-		'returns task'() {
+		'returns task'(this: any) {
 			const dfd = this.async();
 			let task: Task<string> = <any> undefined;
 			let count = 0;
@@ -135,7 +135,7 @@ registerSuite({
 		},
 		'scope'() {
 			const action = createAction({
-				do() {
+				do(this: AnyAction) {
 					return this;
 				}
 			});
