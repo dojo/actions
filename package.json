@@ -13,15 +13,15 @@
 		"url": "https://github.com/dojo/actions.git"
 	},
 	"scripts": {
-		"prepublish": "grunt dist",
+		"prepublish": "grunt peerDepInstall dist",
 		"test": "grunt test"
 	},
 	"typings": "./dist/umd/dojo-actions.d.ts",
 	"peerDependencies": {
-		"dojo-core": ">=2.0.0-alpha.8",
-		"dojo-compose": ">=2.0.0-beta.4",
-		"dojo-has": ">=2.0.0-alpha.1",
-		"dojo-shim": ">=2.0.0-alpha.1"
+		"dojo-core": "next",
+		"dojo-compose": "next",
+		"dojo-has": "next",
+		"dojo-shim": "next"
 	},
 	"devDependencies": {
 		"@reactivex/rxjs": "5.0.0-beta.6",
@@ -42,6 +42,6 @@
 		"istanbul": "0.4.3",
 		"remap-istanbul": ">=0.6.4",
 		"tslint": "^3.10.2",
-		"typescript": "~1.8.10"
+		"typescript": "beta"
 	}
 }

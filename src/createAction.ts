@@ -113,32 +113,28 @@ const configureFunctions = new WeakMap<AnyAction, (configuration: Object) => Pro
  * A factory which creates instances of Action
  */
 const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any, TargettedEventObject<any>>>, ActionOptions<any, ActionState>>({
-		do(options?: DoOptions<any, TargettedEventObject<any>>): Task<any> {
-			const action: AnyAction = this;
-			const doFn = doFunctions.get(action);
-			if (doFn && action.state.enabled) {
-				const result = doFn.call(action, options);
+		do(this: AnyAction, options?: DoOptions<any, TargettedEventObject<any>>): Task<any> {
+			const doFn = doFunctions.get(this);
+			if (doFn && this.state.enabled) {
+				const result = doFn.call(this, options);
 				return isTask(result) ? result : Task.resolve(result);
 			}
 			return Task.resolve();
 		},
-		enable(): void {
-			const action: AnyAction = this;
-			if (!action.state.enabled) {
-				action.setState({ enabled: true });
+		enable(this: AnyAction): void {
+			if (!this.state.enabled) {
+				this.setState({ enabled: true });
 			}
 		},
-		disable(): void {
-			const action: AnyAction = this;
-			if (action.state.enabled) {
-				action.setState({ enabled: false });
+		disable(this: AnyAction): void {
+			if (this.state.enabled) {
+				this.setState({ enabled: false });
 			}
 		},
-		configure(configuration: Object): Promise<void> | void {
-			const action: AnyAction = this;
-			const configureFn = configureFunctions.get(action);
+		configure(this: AnyAction, configuration: Object): Promise<void> | void {
+			const configureFn = configureFunctions.get(this);
 			if (configureFn) {
-				return configureFn.call(action, configuration);
+				return configureFn.call(this, configuration);
 			}
 		}
 	})
