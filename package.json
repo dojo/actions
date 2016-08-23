@@ -18,10 +18,10 @@
 	},
 	"typings": "./dist/umd/dojo-actions.d.ts",
 	"peerDependencies": {
-		"dojo-core": "next",
-		"dojo-compose": "next",
-		"dojo-has": "next",
-		"dojo-shim": "next"
+		"dojo-core": ">=2.0.0-alpha.11",
+		"dojo-compose": ">=2.0.0-beta.9",
+		"dojo-has": ">=2.0.0-alpha.3",
+		"dojo-shim": ">=2.0.0-alpha.3"
 	},
 	"devDependencies": {
 		"@reactivex/rxjs": "5.0.0-beta.6",
@@ -41,7 +41,7 @@
 		"intern": "~3.2.3",
 		"istanbul": "0.4.3",
 		"remap-istanbul": ">=0.6.4",
-		"tslint": "^3.10.2",
-		"typescript": "beta"
+		"tslint": "next",
+		"typescript": "2.1.0-dev.20160819"
 	}
 }
