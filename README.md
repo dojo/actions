@@ -6,7 +6,7 @@
 
 A command like library for Dojo 2 Applications.
 
-**NOTE** At this stage, this is a functional prototype for a proposal that is under discussion.  This is not yet intended for production use.  Consider it *pre-alpha* and is intended to allow people to assess the API. **Use at your own risk and the final API may or may not look anything like this**
+**WARNING** This is *alpha* software. It is not yet production ready, so you should use at your own risk.
 
 ## Features
 
