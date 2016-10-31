@@ -1,8 +1,8 @@
 import compose, { ComposeFactory } from 'dojo-compose/compose';
 import createStateful, { Stateful, StatefulOptions, State } from 'dojo-compose/mixins/createStateful';
-import { EventObject } from 'dojo-core/interfaces';
 import Task, { isTask } from 'dojo-core/async/Task';
-import { Thenable } from 'dojo-shim/interfaces';
+import { EventObject } from 'dojo-interfaces/core';
+import { Thenable } from 'dojo-interfaces/shim';
 import Promise from 'dojo-shim/Promise';
 import WeakMap from 'dojo-shim/WeakMap';
 
