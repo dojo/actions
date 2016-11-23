@@ -42,7 +42,7 @@ export interface ActionMixin<T, O extends DoOptions<T, TargettedEventObject<T>>>
 	do(options?: O): Task<T>;
 
 	/**
-	 * Enabled the task is disabled
+	 * Enable the task if disabled
 	 */
 	enable(): void;
 
