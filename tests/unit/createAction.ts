@@ -154,7 +154,7 @@ registerSuite({
 			}
 		});
 
-		action.on('statechange', () => {
+		action.on('state:changed', () => {
 			statechanged++;
 		});
 
