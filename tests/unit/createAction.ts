@@ -1,8 +1,8 @@
 import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
 import createAction, { isAction, AnyAction, ActionState, DoOptions, TargettedEventObject } from '../../src/createAction';
-import Promise from 'dojo-shim/Promise';
-import Task, { isTask } from 'dojo-core/async/Task';
+import Promise from '@dojo/shim/Promise';
+import Task, { isTask } from '@dojo/core/async/Task';
 
 registerSuite({
 	name: 'createAction',
@@ -154,7 +154,7 @@ registerSuite({
 			}
 		});
 
-		action.on('statechange', () => {
+		action.on('state:changed', () => {
 			statechanged++;
 		});
 

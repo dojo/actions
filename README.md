@@ -1,8 +1,8 @@
-# dojo-actions
+# @dojo/actions
 
 [![Build Status](https://travis-ci.org/dojo/actions.svg?branch=master)](https://travis-ci.org/dojo/actions)
 [![codecov.io](http://codecov.io/github/dojo/actions/coverage.svg?branch=master)](http://codecov.io/github/dojo/actions?branch=master)
-[![npm version](https://badge.fury.io/js/dojo-actions.svg)](http://badge.fury.io/js/dojo-actions)
+[![npm version](https://badge.fury.io/js/@dojo/actions.svg)](http://badge.fury.io/js/@dojo/actions)
 
 A command like library for Dojo 2 Applications.
 
@@ -17,7 +17,7 @@ Actions embody the concept of *doing* something that can be express behaviour wi
 To create a new action, simply use the Action factory:
 
 ```typescript
-import createAction from 'dojo-actions/createAction';
+import createAction from '@dojo/actions/createAction';
 
 const action = createAction({
     do() {
@@ -32,11 +32,11 @@ action
     });
 ```
 
-You *must* specify a `do()` method when using the Action factory.  The Action will wrap the `.do()` method, ensuring that no matter what the return, it will return a `dojo-core/async/Task` which is a `Promise` with the ability to cancel.
+You *must* specify a `do()` method when using the Action factory.  The Action will wrap the `.do()` method, ensuring that no matter what the return, it will return a `@dojo/core/async/Task` which is a `Promise` with the ability to cancel.
 
 ### State
 
-Each Action has a `.state` object which contains any sort of mutatable state.  This is provided by the `dojo-compose/mixin/createStateful` mixin.  When the `.do()` method is invoked, it is scoped so that `this` is the calling action, and therefore `this.state` can be used to read from the state.
+Each Action has a `.state` object which contains any sort of mutatable state.  This is provided by the `@dojo/compose/mixin/createStateful` mixin.  When the `.do()` method is invoked, it is scoped so that `this` is the calling action, and therefore `this.state` can be used to read from the state.
 
 ### Future
 
@@ -47,15 +47,15 @@ It is envisioned that some foundational "helper" actions will be added to this p
 The easiest way to use this package is to install it via `npm`:
 
 ```
-$ npm install dojo-actions
+$ npm install @dojo/actions
 ```
 
 In addition, you can clone this repository and use the Grunt build scripts to manage the package.
 
-Using under TypeScript or ES6 modules, you would generally want to just `import` the `dojo-actions/createAction` module:
+Using under TypeScript or ES6 modules, you would generally want to just `import` the `@dojo/actions/createAction` module:
 
 ```typescript
-import createAction from 'dojo-compose/createAction';
+import createAction from '@dojo/compose/createAction';
 
 const action = createAction({
     do() { /* do something */ }
