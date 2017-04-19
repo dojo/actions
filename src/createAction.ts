@@ -150,12 +150,6 @@ const createAction: ActionFactory = compose<ActionMixin<any, DoOptions<any, Targ
 			if (configure) {
 				configureFunctions.set(instance, configure);
 			}
-			instance.own({
-				destroy() {
-					doFunctions.delete(instance);
-					configureFunctions.delete(instance);
-				}
-			});
 		}
 	});
 
