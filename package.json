@@ -2,7 +2,7 @@
   "name": "@dojo/actions",
   "version": "2.0.0-pre",
   "description": "A command library for Dojo 2 Applications",
-  "homepage": "http://dojotoolkit.org",
+  "homepage": "https://dojo.io",
   "bugs": {
     "url": "https://github.com/dojo/actions/issues"
   },
